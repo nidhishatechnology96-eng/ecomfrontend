@@ -1,6 +1,9 @@
+// src/AdminPanel/ProductManagement.jsx
+
 import React, { useContext, useState, useMemo } from 'react';
 import { AdminContext } from './AdminContext';
-import axios from 'axios';
+// ✅ Import your new API client
+import apiClient from '../api'; 
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function ProductManagement() {
@@ -57,21 +60,20 @@ function ProductManagement() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsUploading(true);
-        // Start with the existing image URL if we are editing
         let imageUrl = editingId ? form.image : "";
 
         try {
-            // If a new file has been selected, upload it
             if (imageFile) {
                 const formData = new FormData();
                 formData.append('image', imageFile);
-                const response = await axios.post('http://localhost:5000/api/upload-image', formData, {
+                
+                // ✅ This now uses your apiClient, which correctly points to the production backend URL
+                const response = await apiClient.post('/api/upload-image', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                imageUrl = response.data.imageUrl; // The new URL from Cloudinary
+                imageUrl = response.data.imageUrl;
             }
 
-            // If there's still no image URL (e.g., adding a new product without an image)
             if (!imageUrl) {
                 showAlert('Please select an image for the product.', 'danger');
                 setIsUploading(false);
@@ -80,6 +82,7 @@ function ProductManagement() {
 
             const productData = { ...form, price: Number(form.price), quantity: Number(form.quantity), image: imageUrl };
 
+            // These functions are now calling the updated logic in AdminContext
             if (editingId) {
                 await updateProduct(editingId, productData);
                 showAlert('Product updated successfully!');
@@ -99,7 +102,6 @@ function ProductManagement() {
     const handleEdit = (product) => {
         window.scrollTo(0, 0);
         setEditingId(product.id);
-        // Include the existing image URL in the form state
         setForm({
             name: product.name,
             price: product.price,
@@ -121,6 +123,7 @@ function ProductManagement() {
 
     return (
         <>
+            {/* The rest of your JSX code below this line requires NO CHANGES */}
             {alert.show && (
                 <div className={`alert alert-${alert.type} position-fixed top-0 end-0 m-3 shadow`} style={{ zIndex: 1050 }}>
                     {alert.message}
@@ -130,7 +133,6 @@ function ProductManagement() {
                 <div className="card-body">
                     <h3 className="card-title mb-4">{editingId ? 'Edit Product' : 'Add a New Product'}</h3>
                     <form onSubmit={handleSubmit}>
-                        {/* Form inputs... */}
                         <div className="row g-3 mb-3">
                             <div className="col-12 col-md-4"><label className="form-label">Product Name</label><input type="text" className="form-control" name="name" value={form.name} onChange={handleChange} required /></div>
                             <div className="col-12 col-md-4"><label className="form-label">Price</label><input type="number" className="form-control" name="price" value={form.price} onChange={handleChange} required min="0" step="0.01" /></div>
@@ -149,7 +151,6 @@ function ProductManagement() {
                     </form>
                 </div>
             </div>
-            {/* Product table... */}
             <h3 className="mt-5 mb-3">All Products</h3>
             <div className="card shadow-sm">
                 <div className="card-header bg-white py-3"><input type="text" className="form-control" placeholder="Search products..." value={query} onChange={(e) => setQuery(e.target.value)} /></div>
